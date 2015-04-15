@@ -3,7 +3,9 @@
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
 #include <libfreenect/libfreenect.hpp>
-
+#include "opencv2/highgui/highgui.hpp"
+ #include "opencv2/imgproc/imgproc.hpp"
+ #include "opencv2/core/core.hpp"
 #include <stdio.h>
 #include <iostream>
 #include "omp.h"
@@ -65,54 +67,6 @@ public:
         };
         // Do not call directly even in child
         void DepthCallback(void* _depth, uint32_t timestamp) {
-                //std::cout << "Depth callback" << std::endl;
-            /*
-                m_depth_mutex.lock();
-                uint16_t* depth = static_cast<uint16_t*>(_depth);
-                for( unsigned int i = 0 ; i < 640*480 ; i++) {
-                        int pval = m_gamma[depth[i]];
-                        int lb = pval & 0xff;
-                        switch (pval>>8) {
-                        case 0:
-                                m_buffer_depth[3*i+0] = 255;
-                                m_buffer_depth[3*i+1] = 255-lb;
-                                m_buffer_depth[3*i+2] = 255-lb;
-                                break;
-                        case 1:
-                                m_buffer_depth[3*i+0] = 255;
-                                m_buffer_depth[3*i+1] = lb;
-                                m_buffer_depth[3*i+2] = 0;
-                                break;
-                        case 2:
-                                m_buffer_depth[3*i+0] = 255-lb;
-                                m_buffer_depth[3*i+1] = 255;
-                                m_buffer_depth[3*i+2] = 0;
-                                break;
-                        case 3:
-                                m_buffer_depth[3*i+0] = 0;
-                                m_buffer_depth[3*i+1] = 255;
-                                m_buffer_depth[3*i+2] = lb;
-                                break;
-                        case 4:
-                                m_buffer_depth[3*i+0] = 0;
-                                m_buffer_depth[3*i+1] = 255-lb;
-                                m_buffer_depth[3*i+2] = 255;
-                                break;
-                        case 5:
-                                m_buffer_depth[3*i+0] = 0;
-                                m_buffer_depth[3*i+1] = 0;
-                                m_buffer_depth[3*i+2] = 255-lb;
-                                break;
-                        default:
-                                m_buffer_depth[3*i+0] = 0;
-                                m_buffer_depth[3*i+1] = 0;
-                                m_buffer_depth[3*i+2] = 0;
-                                break;
-                        }
-                }
-                m_new_depth_frame = true;
-                m_depth_mutex.unlock();
-                */
                 m_depth_mutex.lock();
                 uint16_t* depth = static_cast<uint16_t*>(_depth);
                 // was getVideoBufferSize()
@@ -175,6 +129,29 @@ public:
         device->stopVideo();
         device->stopDepth();
     }
+/**/
+
+cv::Mat ottieniRGB(){
+ int depth_width = 640;
+        int depth_height = 480;
+cv::Mat frame(depth_height,depth_width, CV_8UC3);
+while(!device -> getDepth(depth_map)){}
+        while(!device -> getRGB(rgb)){}
+
+
+for (unsigned int y = 0; y < depth_height; ++y)
+            for ( unsigned int x = 0; x < depth_width; ++x){
+
+
+ uint8_t r = rgb[(y*depth_width + x)*3];
+ uint8_t g = rgb[(y*depth_width + x)*3 + 1];
+ uint8_t b = rgb[(y*depth_width + x)*3 + 2];
+frame.data[frame.channels()*(frame.cols*y + x) + 0]=b;    
+frame.data[frame.channels()*(frame.cols*y + x) + 1]=g;
+frame.data[frame.channels()*(frame.cols*y + x) + 2]=r;
+}
+return frame;
+}
 
     typename pcl::PointCloud<PointT>::Ptr 
     get_point_cloud(int distance, bool colored) 
@@ -184,8 +161,6 @@ public:
         while(!device -> getDepth(depth_map)){}
         while(!device -> getRGB(rgb)){}
 
-
-        
         int depth_width = 640;
         int depth_height = 480;
 
@@ -199,13 +174,12 @@ public:
         //allow infinite values for points coordinates
         cloud->is_dense = false;
 
-
-
         //set camera parameters for kinect
-        double focal_x_depth = 585.187492217609;//5.9421434211923247e+02;
-        double focal_y_depth = 585.308616340665;//5.9104053696870778e+02;
-        double center_x_depth = 322.714077555293;//3.3930780975300314e+02;
-        double center_y_depth = 248.626108676666;//2.4273913761751615e+02;
+        float focal_x_depth = 585.187492217609;//5.9421434211923247e+02;
+        float focal_y_depth = 585.308616340665;//5.9104053696870778e+02;
+        float center_x_depth = 322.714077555293;//3.3930780975300314e+02;
+        float center_y_depth = 248.626108676666;//2.4273913761751615e+02;
+
 
         float bad_point = std::numeric_limits<float>::quiet_NaN ();
         #pragma omp parallel for
