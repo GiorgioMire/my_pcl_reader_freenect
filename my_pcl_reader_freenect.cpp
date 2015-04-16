@@ -6,8 +6,9 @@
 #include "opencv2/highgui/highgui.hpp"
  #include "opencv2/imgproc/imgproc.hpp"
  #include "opencv2/core/core.hpp"
+#include "opencv2/contrib/contrib.hpp"
 #include <string.h>
-#include "omp.h"
+
 const int distance = 7000;
  // 
 //int contatore_save=0;
@@ -76,35 +77,21 @@ boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> cloud;
   //viewer->registerMouseCallback (mouseEventOccurred, (void*)&viewer);
 
  cv::namedWindow("RGB");
+cv::namedWindow("Depth");
    cv::Mat rgbframe(cv::Size(640,480),CV_8UC3);
    cv::Mat depthframe(cv::Size(640,480),CV_16UC1);
+cv::Mat mapped;
   while (!viewer->wasStopped ()) {
-   // cout<<endl<<c.rgb.size()<<endl;
-      //cv::Mat depthframe=cv::Mat(c.depth_map);
+memcpy(rgbframe.ptr(),(void*)&c.rgb.front(),640*480*3); 
+memcpy(depthframe.ptr(),(void*)&c.depth_map.front(),640*480*2); 
+cv::cvtColor(rgbframe,rgbframe, cv::COLOR_BGR2RGB);
+//cout<<depthframe;
+depthframe.convertTo(mapped,CV_8U,256.0/4096.0);
+//cvtColor(depthframe,depthframe,CV_GRAY2BGR);
+applyColorMap(mapped, mapped,cv::COLORMAP_HOT);
+  //
 
-    #pragma omp parallel for
-   for(int i=0;i<rgbframe.rows;i++)
-    for(int j=0;j<rgbframe.cols;j++){
-      cv::Vec3b p;
-                        p[2]= c.rgb[(i*rgbframe.cols + j)*3];
-                        p[1] = c.rgb[(i*rgbframe.cols + j)*3 + 1];
-                        p[0] = c.rgb[(i*rgbframe.cols+ j)*3 + 2];
-                        rgbframe.at<cv::Vec3b>(i,j)=p;
-                      }
-  #pragma omp parallel for
-   for(int i=0;i<rgbframe.rows;i++)
-    for(int j=0;j<rgbframe.cols;j++){
-   
-                        
-                      
-                        depthframe.at<uint16_t>(i,j)= c.depth_map[(i*rgbframe.cols + j)];;
-                      }
-
-
-
-
-  //cv::namedWindow("Depth");
-cv::imshow("Depth",depthframe);                      
+cv::imshow("Depth",mapped);                      
 cv::imshow("RGB",rgbframe);
 cv::waitKey(1);
 
