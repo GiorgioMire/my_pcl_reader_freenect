@@ -1,0 +1,1 @@
+/home/giorgio/Scrivania/Esercizi_tesi/my_pcl_reader_freenect/build/CMakeFiles/my_pcl_reader_freenect.dir
